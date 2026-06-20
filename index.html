@@ -536,9 +536,9 @@
         </div>
       </div>
       <div class="reveal">
-        <!-- Opens the visitor's email app pre-filled, addressed to you. No third party, no API,
-             no CSP dependency — works on any browser with a configured mail client. -->
-        <form id="contactForm" action="mailto:rahulkrishnan2364@gmail.com" method="POST" enctype="text/plain">
+        <!-- Posts to your own /api/contact serverless function (same origin → no CORS, no CSP issue).
+             The function sends the email server-side, so it works regardless of the visitor's setup. -->
+        <form id="contactForm" action="/api/contact" method="POST">
           <div class="field"><label for="cname">Name</label><input id="cname" name="name" type="text" required autocomplete="name" maxlength="120" /></div>
           <div class="field"><label for="cmail">Email</label><input id="cmail" name="email" type="email" required autocomplete="email" maxlength="160" /></div>
           <div class="field"><label for="cmsg">Message</label><textarea id="cmsg" name="message" required maxlength="2000"></textarea></div>
@@ -546,8 +546,8 @@
           <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
           <button class="btn btn-primary" type="submit" style="justify-content:center">Send message
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
-          <p class="form-note">Opens your email app addressed to me — or just write to <a href="mailto:rahulkrishnan2364@gmail.com" style="color:var(--blue-bright)">rahulkrishnan2364@gmail.com</a> directly.</p>
-          <div class="form-ok" id="formOk" role="status">✓ Opening your email app…</div>
+          <p class="form-note">Lands straight in my inbox — or write to <a href="mailto:rahulkrishnan2364@gmail.com" style="color:var(--blue-bright)">rahulkrishnan2364@gmail.com</a> directly.</p>
+          <div class="form-ok" id="formOk" role="status">✓ Message sent. I'll get back to you shortly.</div>
         </form>
       </div>
     </div>
@@ -877,20 +877,35 @@
   if(reduceMotion){ drawEco(0); } else { loopEco(0); }
   window.addEventListener("resize", function(){ clearTimeout(rt); setTimeout(function(){ sizeEco(); if(reduceMotion) drawEco(0); }, 200); });
 
-  /* ---- contact form → opens the visitor's email app, pre-filled. Cannot fail on a network. ---- */
+  /* ---- contact form → /api/contact (server sends the email). mailto only as last resort. ---- */
   var form=document.getElementById("contactForm"), ok=document.getElementById("formOk");
   form.addEventListener("submit", function(e){
     e.preventDefault();
     if(form.botcheck && form.botcheck.checked){ return; } // bot tripped the honeypot
-    var n=document.getElementById("cname").value.trim()||"a visitor";
-    var em=document.getElementById("cmail").value.trim();
-    var msg=document.getElementById("cmsg").value.trim();
-    var href="mailto:rahulkrishnan2364@gmail.com"
-      +"?subject="+encodeURIComponent("Website enquiry from "+n)
-      +"&body="+encodeURIComponent(msg+"\n\n— "+n+(em?" <"+em+">":""));
-    ok.innerHTML='✓ Opening your email app… if it doesn\u2019t open, write to <a href="mailto:rahulkrishnan2364@gmail.com" style="color:var(--blue-bright);text-decoration:underline">rahulkrishnan2364@gmail.com</a>.';
-    ok.classList.add("show");
-    window.location.href=href;
+    var btn=form.querySelector('button[type="submit"]'), original=btn.innerHTML;
+    btn.disabled=true; btn.textContent="Sending…";
+    var payload={
+      name: document.getElementById("cname").value,
+      email: document.getElementById("cmail").value,
+      message: document.getElementById("cmsg").value
+    };
+    fetch("/api/contact",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)})
+      .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){ if(r.ok && j.success){ return j; } throw new Error(); }); })
+      .then(function(){
+        btn.disabled=false; btn.innerHTML=original; form.reset();
+        ok.innerHTML="✓ Message sent. I'll get back to you shortly.";
+        ok.style.color=""; ok.style.borderColor=""; ok.style.background="";
+        ok.classList.add("show");
+      })
+      .catch(function(){
+        btn.disabled=false; btn.innerHTML=original;
+        var n=payload.name||"a visitor", em=payload.email||"", msg=payload.message||"";
+        var href="mailto:rahulkrishnan2364@gmail.com?subject="+encodeURIComponent("Website enquiry from "+n)
+                 +"&body="+encodeURIComponent(msg+"\n\n— "+n+(em?" <"+em+">":""));
+        ok.innerHTML='Couldn\u2019t send automatically. <a href="'+href+'" style="color:var(--blue-bright);text-decoration:underline">Email me directly \u2192</a>';
+        ok.style.color="#ffb3b3"; ok.style.borderColor="rgba(255,120,120,.35)"; ok.style.background="rgba(255,120,120,.07)";
+        ok.classList.add("show");
+      });
   });
 })();
 </script>
