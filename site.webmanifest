@@ -1,0 +1,12 @@
+{
+  "name": "Rahul Krishnan — Cybersecurity Engineer",
+  "short_name": "Rahul Krishnan",
+  "description": "Threat detection, security automation, and vulnerability management at enterprise scale.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050816",
+  "theme_color": "#050816",
+  "icons": [
+    { "src": "/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
+  ]
+}
