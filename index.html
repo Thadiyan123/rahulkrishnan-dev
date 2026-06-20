@@ -536,12 +536,9 @@
         </div>
       </div>
       <div class="reveal">
-        <!-- Delivers to your Gmail via Web3Forms. access_key is a PUBLIC key (safe to expose);
-             it only ever sends to the email you registered it with. Get a free key at web3forms.com. -->
-        <form id="contactForm" action="https://api.web3forms.com/submit" method="POST">
-          <input type="hidden" name="access_key" value="9b8eb045-8a64-4cd4-bb11-e23ccd43866a" />
-          <input type="hidden" name="subject" value="New message from rahulkrishnan.dev" />
-          <input type="hidden" name="from_name" value="rahulkrishnan.dev" />
+        <!-- Opens the visitor's email app pre-filled, addressed to you. No third party, no API,
+             no CSP dependency — works on any browser with a configured mail client. -->
+        <form id="contactForm" action="mailto:rahulkrishnan2364@gmail.com" method="POST" enctype="text/plain">
           <div class="field"><label for="cname">Name</label><input id="cname" name="name" type="text" required autocomplete="name" maxlength="120" /></div>
           <div class="field"><label for="cmail">Email</label><input id="cmail" name="email" type="email" required autocomplete="email" maxlength="160" /></div>
           <div class="field"><label for="cmsg">Message</label><textarea id="cmsg" name="message" required maxlength="2000"></textarea></div>
@@ -549,8 +546,8 @@
           <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
           <button class="btn btn-primary" type="submit" style="justify-content:center">Send message
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
-          <p class="form-note">Goes straight to Rahulkrishnan2364@gmail.com — no tracking, no stored data.</p>
-          <div class="form-ok" id="formOk" role="status">✓ Message sent. I'll get back to you shortly.</div>
+          <p class="form-note">Opens your email app addressed to me — or just write to <a href="mailto:rahulkrishnan2364@gmail.com" style="color:var(--blue-bright)">rahulkrishnan2364@gmail.com</a> directly.</p>
+          <div class="form-ok" id="formOk" role="status">✓ Opening your email app…</div>
         </form>
       </div>
     </div>
@@ -880,37 +877,21 @@
   if(reduceMotion){ drawEco(0); } else { loopEco(0); }
   window.addEventListener("resize", function(){ clearTimeout(rt); setTimeout(function(){ sizeEco(); if(reduceMotion) drawEco(0); }, 200); });
 
-  /* ---- contact form → Web3Forms (AJAX). access_key is public-safe; no secret stored. ---- */
+  /* ---- contact form → opens the visitor's email app, pre-filled. Cannot fail on a network. ---- */
   var form=document.getElementById("contactForm"), ok=document.getElementById("formOk");
   form.addEventListener("submit", function(e){
     e.preventDefault();
     if(form.botcheck && form.botcheck.checked){ return; } // bot tripped the honeypot
-    var btn=form.querySelector('button[type="submit"]'), original=btn.innerHTML;
-    if(form.access_key && form.access_key.value.indexOf("YOUR_WEB3FORMS")>-1){ mailtoFallback(); return; } // key not set yet
-    btn.disabled=true; btn.textContent="Sending…";
-    var payload={};
-    new FormData(form).forEach(function(v,k){ payload[k]=v; });
-    fetch(form.action,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)})
-      .then(function(r){ return r.json().catch(function(){return {success:false};})
-        .then(function(j){ if(r.ok && j.success!==false){ return j; } throw new Error(j.message||"send failed"); }); })
-      .then(function(){
-        btn.disabled=false; btn.innerHTML=original; form.reset();
-        ok.textContent="✓ Message sent. I'll get back to you shortly.";
-        ok.style.color=""; ok.style.borderColor=""; ok.style.background="";
-        ok.classList.add("show");
-      })
-      .catch(function(){ btn.disabled=false; btn.innerHTML=original; mailtoFallback(); });
-  });
-  function mailtoFallback(){
-    var n=document.getElementById("cname").value||"a visitor";
-    var em=document.getElementById("cmail").value||"";
-    var msg=document.getElementById("cmsg").value||"";
-    var href="mailto:rahulkrishnan2364@gmail.com?subject="+encodeURIComponent("Enquiry from rahulkrishnan.dev — "+n)
-             +"&body="+encodeURIComponent(msg+"\n\n— "+n+(em?" ("+em+")":""));
-    ok.innerHTML='Couldn\u2019t send from here. <a href="'+href+'" style="color:var(--blue-bright);text-decoration:underline">Open your email app instead \u2192</a>';
-    ok.style.color="#ffb3b3"; ok.style.borderColor="rgba(255,120,120,.35)"; ok.style.background="rgba(255,120,120,.07)";
+    var n=document.getElementById("cname").value.trim()||"a visitor";
+    var em=document.getElementById("cmail").value.trim();
+    var msg=document.getElementById("cmsg").value.trim();
+    var href="mailto:rahulkrishnan2364@gmail.com"
+      +"?subject="+encodeURIComponent("Website enquiry from "+n)
+      +"&body="+encodeURIComponent(msg+"\n\n— "+n+(em?" <"+em+">":""));
+    ok.innerHTML='✓ Opening your email app… if it doesn\u2019t open, write to <a href="mailto:rahulkrishnan2364@gmail.com" style="color:var(--blue-bright);text-decoration:underline">rahulkrishnan2364@gmail.com</a>.';
     ok.classList.add("show");
-  }
+    window.location.href=href;
+  });
 })();
 </script>
 </body>
